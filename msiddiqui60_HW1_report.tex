@@ -1,0 +1,179 @@
+\documentclass[twoside,10pt]{article}
+\usepackage{amsmath,amsfonts,amsthm,fullpage}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{hyperref}
+
+\begin{document}
+
+\title{ISYE 6740 HW 1}
+\author{Mohammed Khalid Siddiqui}
+\date{}
+
+\section{Concept Questions}
+
+\begin{enumerate}
+
+\item In classical machine learning, Supervised learning includes both Classification and Regression
+tasks whereas Unsupervised learning tends to be associated with Clustering. The primary difference between
+Supervised and Unsupervised learning is that the former uses labeled data to model associations between
+inputs and outputs whereas the latter does not use labeled data, instead opting to uncover associations
+through similarity metrics like euclidian distance in the example of clustering. Two benefits or use-cases
+of supervised learning can be to predict or forecast outputs like house prices based on a series of inputs
+such as location, size, number of bedrooms and other input features as well as classify customers at risk
+of churning based on a series of input data. The first task was a regression, and the second a classification.
+Both are examples of supervised learning as they require input and output labels to function and attempt
+to predict the output label based on the input. This serves myriad of use cases across industry. Drawbacks of
+supervised learning include the need for output labels and model fitting to known data. Adding labels
+such as in the case of an image dataset can be extremely time consuming. Additionally, the use of labels means
+the analyst must have some idea of what they are modeling and trying to uncover. It can be harder to explore
+data if you are limited to seeking a specific output which you must define. Unsupervised learning by contrast
+carries the strength that allows one to explore similarities between data without explicitly defining outputs.
+This focus on finding similar associations generally means that unsupervised learning may not require the training
+samples in the same way supervised learning tasks do. One drawback of unsupervised learning is that unlike
+supervised learning, because you aren't using labeled outputs, it may be harder to measure success via metrics like
+accuracy or mean squared error etc. For this reason, unsupervised learning may be stronger suited to
+exploratory data analysis tasks or creating associations of like groups without penalties for "bad" groupings.
+
+\item Per the hint provided in the homework to use Hamming distance for the one-hot encoded version of the categorical
+variables and the Google definition of (and lesson information on) Hamming distance being the number
+of positions where the corresponding symbols are different, we can intuit that for any categorical variable
+that has been one-hot eoncded, the Hamming distance equivalent value would be 0 if the values are the same,
+and 2 if they are different, irrespective of the number of possible values available. The reason is because,
+each categorical variable will only allow an observation to select one option. For example, let's assume
+the second feature corresponds to 'building type' and let's say that there are n = 4 building types: "house",
+"office", "apartment", "condo". Once we have one-hot encoded this feature, we will have 4 columns in the place of
+the original. Each column will encode either a 1 or 0 depending on whether that value is present or not.
+Going back to the example presented to us, assume the column order is the same as the list above. For those
+four columns, x1 will be encoded as follows 1,0,0,0. x2 also has a building type of house and similarly, the
+one-hot encoded features will appear as 1,0,0,0. If x3 were to be of type "office", the encoding would
+be 0,1,0,0. Any observation can have only 1 building type. The Hamming distance for building type between x2
+and x3 is 2 because two of the columns are different. The same logic can be applied to the 'city' feature.
+Each observation can only have 1 city and the Hamming distance will be either 0 if agreed or 2 if disagreed.
+For our numerical variable which appears to be price, we can use Euclidean distance which is
+\begin{equation}
+d(p,q) = \sqrt{\sum_{i=1}^{n} \left( p_i - q_i \right)^2}
+\end{equation}
+We will need to incorporate all three distances, the two hamming distances and the one euclidian distance
+to create our clustering distance formula. This will require us to prioritize, standardize, and weight
+our distances appropriately to arrive at a final distance in an reasonable manner. For the sake of simplicity,
+for this problem, let's assume that city, building type, and cost are all equally important in calculating
+similarity between buildings. To acheive this, we will standardize the Euclidian distance d(p,q) above
+such that values are between 0 and 2. We use 2 as our upper bound because that is the maximum Hamming distance
+acheivable for building type and city respectively.
+I will use the following calculation to normalize the Euclidian function:
+\begin{equation}
+d_{\text{norm}}(x, y) = \frac{2 \cdot d(x, y)}{d_{\text{max}}}
+\end{equation}
+where d_max is the largest distance acheivable between building prices.
+The final distance equation can act as an ensemble or combination of our three calculated distances
+Hamming_buildingtype, Hamming_city, and d_norm. For a simple preliminary model, additive distance
+should suffice:
+\begin{equation}
+d_total = Hamming_buildingtype + Hamming_city + d_norm
+\end{equation}
+Upon running an initial iteration of the clustering algorithm, it may be helpful to consider weighting the
+different distance components or even using different transformations or formula.
+
+\item For this problem we are comparing the functions inside the arg min function to prove their
+equivalence, or specifically that given the same inputs, they will product the same outputs. The argmin
+function in this instance will identify and return the value of j (the cluster a data point should be assigned to)
+between 1 and k that minimizes the square of the Euclidean norm or L2 distance (As discussed in the lectures)
+between the data point x_i and centroid c_j. Re-writing the Euclidean distance will be
+\begin{equation}
+\|x_i - c_j\|^2 = (c_j^\top c_j - 2c_j^\top x_i) + x_i^\top x_i
+
+c_j^\top c_j - 2c_j^\top x_i
+
+\frac{1}{2} c_j^\top c_j - c_j^\top x_i
+\end{equation}
+In the above we first expanded the squared L2 norm distance and re-wrote our features in vector format.
+Realizing we're applying the arg min function with respect to change in j, we dropped the "constant" terms
+which are identical across the two and redundant for any given data point. Lastly, knowing that the result
+of the argmin function is irrespective of scale of the inputs: meaning the output of argmin(1,3) is the
+same as the output of argmin(2,6) or argmin(10, 30), we divided by a factor of 2 to make the expression
+equivalent to the resulting one in the homework problem.
+
+\item K-means algorithm operates by setting initial centroids for each cluster, then identifying the points
+which belong to those clusters, then updating those centroids, then identifying the points which belong to
+the new clusters. This iterative process may not always converge to the "global optimal solution". I believe
+in the lecture most k-means are identified as non-convex and may get trapped in local minima or converge to
+local optima. This is interestingly also an issue sometimes with the gradient descent algorithm used to optimize
+neural networks. In the k-means because there isn't an oscillating movement and instead a monotonic movement,
+a converge is almost all but guaranteed but it won't necessarily be a globally optimal convergence. To this end,
+it may be helpful to run k-means with multiple iterations using different initial centroids.
+
+\item K-means is guaranteed to converge, if only to a local optimum not global, because there are a finite
+number of k clusters ot iterate over and because the objective function, as discussed in the lectures, is
+monotonically decreasing. As the objective function does not oscillate, it is guaranteed to converge to some
+minimum. Due to the finite number of data points, the clusters can only update via the objective function
+to a finite posisble number of combinations. Out of the three reasons provided: finite num k clusters, finite
+number of data points, and monotonically decreasing objective functions, it is the objective function which
+is the most compelling reason for convergence as an oscillating function could theoretically result in a loop
+that continues infinitely.
+
+\item Considering the graph provided in the question, we will first need to create an adjacency matrix,
+then will we create the degree matrix. Following the degree matrix, we will then calculate the
+graph Laplacian using the convenient formula L = Degree Matrix - Adjacency Matrix. Using the Graph
+Laplacian, we will use the numpy library to then calculate the eigenvalues and their respective eigenvectors.
+The number of 0 eigenvalues correspeonds to the number of connected components in the graph and looking
+at the corresponding eigenvectors for those eigenvalues will show us which nodes belong to which connected
+components because they will possess the same entries in the eigenvector. Please reference the ipynb file
+for the code. Below, I'll add the relevant matrices and eigenvalues and eigenvectors printed. You'll see
+the first three entries in the first eigenvector represent the first three nodes and belong to the same
+connected component whereas the second eigenvector contains the last two nodes belong to the same connected
+component.
+
+\textbf{Adjacency Matrix}
+\[
+\begin{matrix}
+0 & 1 & 1 & 0 & 0 \\
+1 & 0 & 1 & 0 & 0 \\
+1 & 1 & 0 & 0 & 0 \\
+0 & 0 & 0 & 0 & 1 \\
+0 & 0 & 0 & 1 & 1
+\end{matrix}
+\]
+
+\textbf{Degree Matrix}
+\[
+\begin{matrix}
+2 & 0 & 0 & 0 & 0 \\
+0 & 2 & 0 & 0 & 0 \\
+0 & 0 & 2 & 0 & 0 \\
+0 & 0 & 0 & 1 & 0 \\
+0 & 0 & 0 & 0 & 1
+\end{matrix}
+\]
+
+\textbf{Graph Laplacian: D - A}
+\[
+\begin{matrix}
+2 & -1 & -1 & 0 & 0 \\
+-1 & 2 & -1 & 0 & 0 \\
+-1 & -1 & 2 & 0 & 0 \\
+0 & 0 & 0 & 1 & -1 \\
+0 & 0 & 0 & -1 & 1
+\end{matrix}
+\]
+
+\textbf{Eigenvalues}
+\[
+\begin{matrix}
+0 & 0 & 2 & 3 & 3
+\end{matrix}
+\]
+
+\textbf{Relevant Eigenvectors (correspond to eigenvalues = 0)}
+\[
+\begin{matrix}
+-0.57735027 & 0  \\
+-0.57735027 & 0  \\
+-0.57735027 & 0  \\
+0 & 0.70710678  \\
+0 & 0.70710678
+\end{matrix}
+\]
+
+\end{enumerate}
