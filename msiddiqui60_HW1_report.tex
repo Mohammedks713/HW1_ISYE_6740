@@ -175,5 +175,117 @@ component.
 0 & 0.70710678
 \end{matrix}
 \]
-
 \end{enumerate}
+
+\section{Math of k-means Clustering}
+
+\begin{enumerate}
+
+\item :et's look at the equations provided before we start to answer the questions.
+\begin{equation}
+J =\sum_{i=1}^m\sum_{j=1}^k r^{ij} \|\text x^i-\mu^j\|^2,
+\label{J_def}
+\end{equation}
+$$\mu^j=\frac{\sum_i r^{ij} \text x^i}{\sum_i r^{ij}}.$$
+
+The first equation states that the k-means function seeks to minimize the distortion J by summing up
+the squared euclidian distance for each data point from its respective centroid.The r_ij term ensures that
+we do not take the distance of a datapoint from a centroid other than its own in our calculation. The final
+derived equation below states that the centroid Mu for a given cluster j that minimizes the distortion
+function J is the sum of all data points in that cluster divided by the total number of data points in that
+cluster, which is essentially the average of all the points in that cluster j. Similarly to a previous concept
+question, we can first expand the squared Euclidian distance to write in a format we are accustomed to. To
+find critical points such as minimum or maximum, we will then take the derivative with respect to our variable
+of interest (in this case the centroid Mu_j which we are trying to optimize to minimize the distortion function
+J). Once we set the derivative to 0, we can solve for the value of centroid Mu_j.
+
+\[
+\| x_i - \mu_j \|^2 = (x_i - \mu_j)^T(x_i - \mu_j)
+\]
+
+\[
+\frac{\partial J}{\partial \mu_j} = \sum_{i=1}^{m} r_{ij} \cdot 2(\mu_j - x_i) = 0
+\]
+
+\[
+\mu_j = \frac{\sum_{i=1}^{m} r_{ij} x_i}{\sum_{i=1}^{m} r_{ij}}
+\]
+
+In the final steps, Mu_j can be pulled out of the sum and treated as a constant as it doesn't vary with i
+like the r_ij term does, allowing us to simply expand the summation terms and divide to isolate Mu_j on the
+left side of the equation.
+
+\item The variable r_ij is 1 when the datapoint x_i belongs to the jth cluster and 0 when it doesn't as
+mentioned in the first part of the section. If we have a fixed centroid and need to determine whether
+r_ij should be 1 or 0, we need to find the closest centroid to that data point and only assign 1 when
+that is true. To accomplish this, for a given point x_i, we will need to traverse all centroids Mu_j for all
+j clusters and then find the minimum distance (in our case the squared euclidian distance) between the point
+and the centroid and return 1 for that combination. As in the previous concept section and lectures, we can use the
+concept of argmin function to help accomplish this. Mathematically, our function will appear as:
+
+\begin{equation}
+\[
+r_{ij} =
+\begin{cases}
+1 & \text{if } j = \arg \min_{j'} \| x_i - \mu_{j'} \|^2 \\
+0 & \text{otherwise}
+\end{cases}
+\]
+\end{equation}
+
+This will minimize the distortion function j as the r_ij values are now set appropriately.
+
+\item We'll now accomplish part 1 and 2 for the situation where instead of euclidean distance,
+we use the Mahalnobis distance in minimizing the cost-function.
+\[
+J =\sum_{i=1}^m\sum_{j=1}^k r^{ij} (\text x^i-\mu^j)^T \Sigma  (\text x^i-\mu^j),
+\]
+
+Per the source I've linked below, the Mahalnobis distance is the relative distance of point x_i, from the center
+of mass y (in our case, the centroid Mu_j). The transpose vector of x_i - Mu_j is multiplied by the
+inverse of the covariance matrix multipled by x_i - Mu_j. This essentially introduces a normalization
+component. Additionally, like our squared euclidian distance in the prior problem, we have the squared
+Mahalanobis distance. The steps we take will be identical to those we took to solve for the
+respective Mu_j and r_ij of the euclidian squared distance. However, now we simply have an additional
+covariance term to be concerned with. I'll skip ahead to the parts that will look different.
+\[
+\frac{\partial J}{\partial \boldsymbol{\mu}_j} = -2 \sum_{i=1}^{m} r_{ij} \Sigma (\mathbf{x}_i - \boldsymbol{\mu}_j)
+\]
+
+\[
+-2 \sum_{i=1}^{m} r_{ij} \Sigma (\mathbf{x}_i - \boldsymbol{\mu}_j) = 0
+\]
+
+\[
+\sum_{i=1}^{m} r_{ij} \Sigma \mathbf{x}_i = \sum_{i=1}^{m} r_{ij} \Sigma \boldsymbol{\mu}_j
+\]
+
+\[
+\boldsymbol{\mu}_j \sum_{i=1}^{m} r_{ij} = \sum_{i=1}^{m} r_{ij} \mathbf{x}_i
+\]
+
+\[
+\boldsymbol{\mu}_j = \frac{\sum_{i=1}^{m} r_{ij} \mathbf{x}_i}{\sum_{i=1}^{m} r_{ij}}
+\]
+
+Note, that we 'cancelled' out the covariance definite matrix present on both sides. Also note how the
+optimal centroid M_j for cluster j looks identical to the one from the l2-norm squared, as the average
+of the data points within the cluster. For the cluster assignment solving for r_ij, we'll follow the same
+logic we did for the l2_norm squared distance. Namely, we realize we are setting r_ij to 1 where
+the distance between a point and cluster is the minimum for all given clusters. We will simply replace
+the distance function to the Mahalanobis distance squared formula provided in the assignment.
+
+\[
+r_{ij} = \begin{cases}
+1 & \text{if } j = \arg \min_{j'} \; (\mathbf{x}_i - \boldsymbol{\mu}_{j'})^T \Sigma (\mathbf{x}_i - \boldsymbol{\mu}_{j'}) \\
+0 & \text{otherwise}
+\end{cases}
+\]
+
+
+Source used to understand Mahalanobis distance: https://math.stackexchange.com/questions/428064/distance-of-a-test-point-from-the-center-of-an-ellipsoid
+Another source: https://www.statisticshowto.com/mahalanobis-distance/
+Another source: https://mccormickml.com/2014/07/22/mahalanobis-distance/
+\end{enumerate}
+
+\section{Image Compression Using Clustering}
