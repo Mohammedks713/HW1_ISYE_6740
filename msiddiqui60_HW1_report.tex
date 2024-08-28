@@ -289,3 +289,13 @@ Another source: https://mccormickml.com/2014/07/22/mahalanobis-distance/
 \end{enumerate}
 
 \section{Image Compression Using Clustering}
+
+Third image source: https://commons.wikimedia.org/wiki/File:Greycat.jpg
+
+Steps:
+- convert images into pixel color representations
+- define the number of clusters
+- set the initial position of each cluster randomly (you are going to run this multiple times)
+- use the l2-norm squared distance formula for each pixel to assign a cluster
+- update the clusters
+- repeat assignment until convergence (maybe set a condition until it stops)
