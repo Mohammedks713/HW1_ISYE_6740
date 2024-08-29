@@ -1,195 +1,574 @@
-\documentclass[twoside,10pt]{article}
+\documentclass{article}
 \usepackage{amsmath,amsfonts,amsthm,fullpage}
 \usepackage{algorithm}
 \usepackage{algorithmic}
 \usepackage{graphicx}
 \usepackage{hyperref}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{1em}
 
 
+\title{ISYE 6740 HW 1}
+\author{Mohammed Khalid Siddiqui}
+\date{\today}
 
 \begin{document}
 
-\title{ISYE 6740 Fall 2024\\ Homework 1 (100 points + 10 bonus points)}
-%\author{Yao Xie}
-\date{}
-
 \maketitle
 
-\vspace{-.5in}
-
-In this homework, the superscript of a symbol $\text x^i$ denotes the index of samples (not raising to $i$th power); this is a convention in this class. Please follow the homework submission instructions in the syllabus.
-
-\section{Concept questions [30 points]}
-
-Please provide a brief answer to each question, and provide math arguments if asked. 
+\section{Concept Questions}
 
 \begin{enumerate}
 
-\item (5 points) What's the main difference between supervised and unsupervised learning? Give two benefit and drawback for supervised and unsupervised learning, respectively. 
+\item In classical machine learning, Supervised learning includes both Classification and Regression
+tasks whereas Unsupervised learning tends to be associated with Clustering. The primary difference between
+Supervised and Unsupervised learning is that the former uses labeled data to model associations between
+inputs and outputs whereas the latter does not use labeled data, instead opting to uncover associations
+through similarity metrics like euclidian distance in the example of clustering. Two benefits or use-cases
+of supervised learning can be to predict or forecast outputs like house prices based on a series of inputs
+such as location, size, number of bedrooms and other input features as well as classify customers at risk
+of churning based on a series of input data. The first task was a regression, and the second a classification.
+Both are examples of supervised learning as they require input and output labels to function and attempt
+to predict the output label based on the input. This serves myriad of use cases across industry. Drawbacks of
+supervised learning include the need for output labels and model fitting to known data. Adding labels
+such as in the case of an image dataset can be extremely time consuming. Additionally, the use of labels means
+the analyst must have some idea of what they are modeling and trying to uncover. It can be harder to explore
+data if you are limited to seeking a specific output which you must define. Unsupervised learning by contrast
+carries the strength that allows one to explore similarities between data without explicitly defining outputs.
+This focus on finding similar associations generally means that unsupervised learning may not require the training
+samples in the same way supervised learning tasks do. One drawback of unsupervised learning is that unlike
+supervised learning, because you aren't using labeled outputs, it may be harder to measure success via metrics like
+accuracy or mean squared error etc. For this reason, unsupervised learning may be stronger suited to
+exploratory data analysis tasks or creating associations of like groups without penalties for "bad" groupings.
 
-\item (5 points) Consider a dataset with data points each having 3 features, e.g., $x^1 = \{\mbox{``Atlanta''}, \mbox{``house''}, 500k\}$, and $x^2 = \{\mbox{``San Francisco''}, \mbox{``house''}, 300k\}$. Define a proper similarity function $d(x^i, x^j)$ for this kind of data, and argue why it is a reasonable choice. (Hint: The feature vector consists of categorial and real-valued features; for categorical variables, it is better to convert them into one-hot-keying binary vectors and use Hamming distance, and for real-valued features, you may use Euclidean distance, for instance. And then you can combine the similarity measure in some way.)
+\item Per the hint provided in the homework to use Hamming distance for the one-hot encoded version of the categorical
+variables and the Google definition of (and lesson information on) Hamming distance being the number
+of positions where the corresponding symbols are different, we can intuit that for any categorical variable
+that has been one-hot eoncded, the Hamming distance equivalent value would be 0 if the values are the same,
+and 2 if they are different, irrespective of the number of possible values available. The reason is because,
+each categorical variable will only allow an observation to select one option. For example, let's assume
+the second feature corresponds to 'building type' and let's say that there are n = 4 building types: "house",
+"office", "apartment", "condo". Once we have one-hot encoded this feature, we will have 4 columns in the place of
+the original. Each column will encode either a 1 or 0 depending on whether that value is present or not.
+Going back to the example presented to us, assume the column order is the same as the list above. For those
+four columns, X1 will be encoded as follows 1,0,0,0. X2 also has a building type of house and similarly, the
+one-hot encoded features will appear as 1,0,0,0. If X3 were to be of type "office", the encoding would
+be 0,1,0,0. Any observation can have only 1 building type. The Hamming distance for building type between X2
+and X3 is 2 because two of the columns are different. The same logic can be applied to the 'city' feature.
+Each observation can only have 1 city and the Hamming distance will be either 0 if agreed or 2 if disagreed.
+For our numerical variable which appears to be price, we can use Euclidean distance which is
+\begin{equation}
+d(p,q) = \sqrt{\sum_{i=1}^{n} \left( p_i - q_i \right)^2}
+\end{equation}
+We will need to incorporate all three distances, the two hamming distances and the one euclidean distance
+to create our clustering distance formula. This will require us to prioritize, standardize, and weight
+our distances appropriately to arrive at a final distance in an reasonable manner. For the sake of simplicity,
+for this problem, let's assume that city, building type, and cost are all equally important in calculating
+similarity between buildings. To achieve this, we will standardize the Euclidian distance d(p,q) above
+such that values are between 0 and 2. We use 2 as our upper bound because that is the maximum Hamming distance
+achievable for building type and city respectively.
+I will use the following calculation to normalize the Euclidean function:
+\begin{equation}
+d_{\text{norm}}(x, y) = \frac{2 \cdot d(x, y)}{d_{\text{max}}}
+\end{equation}
+where $d_{max}$ is the largest distance achievable between building prices.
+The final distance equation can act as an ensemble or combination of our three calculated distances
+$Hamming_{buildingtype}$, $Hamming_{city}$, and $d_{norm}$. For a simple preliminary model, additive distance
+should suffice:
+\begin{equation}
+d_{total} = Hamming_{buildingtype} + Hamming_{city} + d_{norm}
+\end{equation}
+Upon running an initial iteration of the clustering algorithm, it may be helpful to consider weighting the
+different distance components or even using different transformations or formula.
 
-\item (5 points) Show that the clustering assignment problem 
+\item For this problem we are comparing the functions inside the argmin function to prove their
+equivalence, or specifically that given the same inputs, they will product the same outputs. The argmin
+function in this instance will identify and return the value of j (the cluster a data point should be assigned to)
+between 1 and k that minimizes the square of the Euclidean norm or L2 distance (as discussed in the lectures)
+between the data point $x_i$ and centroid $c_j$. Re-writing the Euclidean distance will be
+\begin{equation}
+\|x_i - c_j\|^2 = (c_j^\top c_j - 2c_j^\top x_i) + x_i^\top x_i
+\end{equation}
+\begin{equation}
+c_j^\top c_j - 2c_j^\top x_i
+\end{equation}
+\begin{equation}
+\frac{1}{2} \cdot c_j^\top c_j - c_j^\top x_i
+\end{equation}
+In the above we first expanded the squared L2 norm distance and re-wrote our features in vector format.
+Realizing we're applying the arg min function with respect to change in j, we dropped the "constant" terms
+which are identical across the two and redundant for any given data point. Lastly, knowing that the result
+of the argmin function is irrespective of scale of the inputs: meaning the output of argmin(1,3) is the
+same as the output of argmin(2,6) or argmin(10, 30), we divided by a factor of 2 to make the expression
+equivalent to the resulting one in the homework problem.
+
+\item K-means algorithm operates by setting initial centroids for each cluster, then identifying the points
+which belong to those clusters, then updating those centroids, then identifying the points which belong to
+the new clusters. This iterative process may not always converge to the "global optimal solution". I believe
+in the lecture most k-means are identified as non-convex and may get trapped in local minima or converge to
+local optima. This is interestingly also an issue sometimes with the gradient descent algorithm used to optimize
+neural networks. In the k-means because there isn't an oscillating movement and instead a monotonic movement,
+a converge is almost all but guaranteed but it won't necessarily be a globally optimal convergence. To this end,
+it may be helpful to run k-means with multiple iterations using different initial centroids.
+
+\item K-means is guaranteed to converge, if only to a local optimum not global, because there are a finite
+number of k clusters ot iterate over and because the objective function, as discussed in the lectures, is
+monotonically decreasing. As the objective function does not oscillate, it is guaranteed to converge to some
+minimum. Due to the finite number of data points, the clusters can only update via the objective function
+to a finite posisble number of combinations. Out of the three reasons provided: finite num k clusters, finite
+number of data points, and monotonically decreasing objective functions, it is the objective function which
+is the most compelling reason for convergence as an oscillating function could theoretically result in a loop
+that continues infinitely.
+
+\item Considering the graph provided in the question, we will first need to create an adjacency matrix,
+then will we create the degree matrix. Following the degree matrix, we will then calculate the
+graph Laplacian using the convenient formula L = Degree Matrix - Adjacency Matrix. Using the Graph
+Laplacian, we will use the numpy library to then calculate the eigenvalues and their respective eigenvectors.
+The number of 0 eigenvalues corresponds to the number of connected components in the graph and looking
+at the corresponding eigenvectors for those eigenvalues will show us which nodes belong to which connected
+components because they will possess the same entries in the eigenvector. Please reference the ipynb file
+for the code. Below, I'll add the relevant matrices and eigenvalues and eigenvectors printed. You'll see
+the first three entries in the first eigenvector represent the first three nodes and belong to the same
+connected component whereas the second eigenvector contains the last two nodes belong to the same connected
+component.
+
+\textbf{Adjacency Matrix}
 \[
-\pi(i) = \arg\min_{j=1, \ldots, k} \|x^i- c^j\|^2
+\begin{matrix}
+0 & 1 & 1 & 0 & 0 \\
+1 & 0 & 1 & 0 & 0 \\
+1 & 1 & 0 & 0 & 0 \\
+0 & 0 & 0 & 0 & 1 \\
+0 & 0 & 0 & 1 & 1
+\end{matrix}
 \]
-is equivalent to solving
+
+\textbf{Degree Matrix}
 \[
-\pi(i) = \arg \min_{j=1, \ldots, k} (c^j)^T\left(\frac 1 2 c^j-x^i\right).
+\begin{matrix}
+2 & 0 & 0 & 0 & 0 \\
+0 & 2 & 0 & 0 & 0 \\
+0 & 0 & 2 & 0 & 0 \\
+0 & 0 & 0 & 1 & 0 \\
+0 & 0 & 0 & 0 & 1
+\end{matrix}
 \]
-Note that the second approach will facilitate ``vectorized'' operation and be implemented in our demo code. 
 
+\textbf{Graph Laplacian: D - A}
+\[
+\begin{matrix}
+2 & -1 & -1 & 0 & 0 \\
+-1 & 2 & -1 & 0 & 0 \\
+-1 & -1 & 2 & 0 & 0 \\
+0 & 0 & 0 & 1 & -1 \\
+0 & 0 & 0 & -1 & 1
+\end{matrix}
+\]
 
+\textbf{Eigenvalues}
+\[
+\begin{matrix}
+0 & 0 & 2 & 3 & 3
+\end{matrix}
+\]
 
-\item (5 points) Why do different initializations for k-means lead to different results?
-
-\item (5 points) Why $k$-means will (be guaranteed to) stop after a finite number of iterations?
-
-\item (5 points) Consider the following simple graph
-\begin{center}
-\includegraphics[width = 0.2\textwidth]{plot}
-\end{center}
-
-Write down the graph Laplacian matrix and find the eigenvectors associated with the zero eigenvalues. Explain how you find out the number of disconnected clusters in the graph and identify these disconnected clusters using these eigenvectors.
-
+\textbf{Relevant Eigenvectors (correspond to eigenvalues = 0)}
+\[
+\begin{matrix}
+-0.57735027 & 0  \\
+-0.57735027 & 0  \\
+-0.57735027 & 0  \\
+0 & 0.70710678  \\
+0 & 0.70710678
+\end{matrix}
+\]
 \end{enumerate}
 
-\section{Math of k-means clustering [25 points]}
- Given $m$ data points $\text x^i \in \mathbb R^{n}$, $i=1,\dots, m$, $K$-means clustering algorithm groups them into $k$ clusters by minimizing the distortion function over $\{ r^{ij}, \mu^j \}$
+\section{Math of k-means Clustering}
+
+\begin{enumerate}
+
+\item Let's look at the equations provided before we start to answer the questions.
 \begin{equation}
 J =\sum_{i=1}^m\sum_{j=1}^k r^{ij} \|\text x^i-\mu^j\|^2,
 \label{J_def}
 \end{equation}
-where $r^{ij}=1$ if $\text x^i$ belongs to the $j$-th cluster and $r^{ij}=0$ otherwise.
+\begin{equation}
+\mu^j=\frac{\sum_i r^{ij} \text x^i}{\sum_i r^{ij}}.
+\end{equation}
+The first equation states that the k-means function seeks to minimize the distortion J by summing up
+the squared euclidian distance for each data point from its respective centroid.The $r_{ij}$ term ensures that
+we do not take the distance of a datapoint from a centroid other than its own in our calculation. The final
+derived equation below states that the centroid Mu for a given cluster j that minimizes the distortion
+function J is the sum of all data points in that cluster divided by the total number of data points in that
+cluster, which is essentially the average of all the points in that cluster j. Similarly to a previous concept
+question, we can first expand the squared Euclidean distance to write in a format we are accustomed to. To
+find critical points such as minimum or maximum, we will then take the derivative with respect to our variable
+of interest (in this case the centroid $Mu_j$ which we are trying to optimize to minimize the distortion function
+J). Once we set the derivative to 0, we can solve for the value of centroid $Mu_j$.
+\begin{equation}
+\| x_i - \mu_j \|^2 = (x_i - \mu_j)^T(x_i - \mu_j)
+\end{equation}
+\begin{equation}
+\frac{\partial J}{\partial \mu_j} = \sum_{i=1}^{m} r_{ij} \cdot 2(\mu_j - x_i) = 0
+\end{equation}
+\begin{equation}
+\mu_j = \frac{\sum_{i=1}^{m} r_{ij} x_i}{\sum_{i=1}^{m} r_{ij}}
+\end{equation}
+In the final steps, $Mu_j$ can be pulled out of the sum and treated as a constant as it doesn't vary with i
+like the $r_{ij}$ term does, allowing us to simply expand the summation terms and divide to isolate $Mu_j$ on the
+left side of the equation.
 
-\begin{enumerate}
+\item The variable $r_{ij}$ is 1 when the datapoint $x_i$ belongs to the jth cluster and 0 when it doesn't as
+mentioned in the first part of the section. If we have a fixed centroid and need to determine whether
+$r_{ij}$ should be 1 or 0, we need to find the closest centroid to that data point and only assign 1 when
+that is true. To accomplish this, for a given point $x_i$, we will need to traverse all centroids $Mu_j$ for all
+j clusters and then find the minimum distance (in our case the squared euclidean distance) between the point
+and the centroid and return 1 for that combination. As in the previous concept section and lectures, we can use the
+concept of argmin function to help accomplish this. Mathematically, our function will appear as:
 
-\item (10 points) Derive mathematically that using the squared Euclidean distance $\|\text x^i-\mu^j\|^2$ as the dissimilarity function, the centroid that minimizes the distortion function $J$  for given assignments $r^{ij}$ are given by
-   $$\mu^j=\frac{\sum_i r^{ij} \text x^i}{\sum_i r^{ij}}.$$
-   That is, $\mu^j$ is the center of $j$-th cluster.  \\
-   Hint: You may start by taking the partial derivative of $J$ with respect to $\mu^j$, with $r^{ij}$ fixed.
-   
-   
-\item (10 points) Derive mathematically what should be the assignment variables $r^{ij}$ be to minimize the distortion function $J$, when the centroids $\mu^j$ are fixed.
+\begin{equation}
+r_{ij} =
+\begin{cases}
+1 & \text{if } j = \arg \min_{j'} \| x_i - \mu_{j'} \|^2 \\
+0 & \text{otherwise}
+\end{cases}
+\end{equation}
 
-\item (5 points) For the question above, now suppose we change the similar score to a ``quadratic'' distance (also known as Mahalanobis distance) for given and fixed positive definite matrix $\Sigma \in \mathbb R^{n\times n}$, and the distortion function becomes:
-\[
+This will minimize the distortion function j as the $r_{ij}$ values are now set appropriately.
+
+\item We'll now accomplish part 1 and 2 for the situation where instead of euclidean distance,
+we use the Mahalnobis distance in minimizing the cost-function.
+\begin{equation}
 J =\sum_{i=1}^m\sum_{j=1}^k r^{ij} (\text x^i-\mu^j)^T \Sigma  (\text x^i-\mu^j),
-\]
-Derive what $\mu^{j}$ and $r^{ij}$ becomes in this case.
+\end{equation}
 
+Per the source I've linked below, the Mahalnobis distance is the relative distance of point $x_i$, from the center
+of mass y (in our case, the centroid Mu_j). The transpose vector of $x_i$ - $Mu_j$ is multiplied by the
+inverse of the covariance matrix multiplied by $x_i$ - $Mu_j$. This essentially introduces a normalization
+component. Additionally, like our squared euclidean distance in the prior problem, we have the squared
+Mahalanobis distance. The steps we take will be identical to those we took to solve for the
+respective $Mu_j$ and $r_{ij}$ of the euclidean squared distance. However, now we simply have an additional
+covariance term to be concerned with. I'll skip ahead to the parts that will look different.
+\begin{equation}
+\frac{\partial J}{\partial \boldsymbol{\mu}_j} = -2 \sum_{i=1}^{m} r_{ij} \Sigma (\mathbf{x}_i - \boldsymbol{\mu}_j)
+\]
+
+\begin{equation}
+-2 \sum_{i=1}^{m} r_{ij} \Sigma (\mathbf{x}_i - \boldsymbol{\mu}_j) = 0
+\end{equation}
+
+\begin{equation}
+\sum_{i=1}^{m} r_{ij} \Sigma \mathbf{x}_i = \sum_{i=1}^{m} r_{ij} \Sigma \boldsymbol{\mu}_j
+\end{equation}
+
+\begin{equation}
+\boldsymbol{\mu}_j \sum_{i=1}^{m} r_{ij} = \sum_{i=1}^{m} r_{ij} \mathbf{x}_i
+\end{equation}
+
+\begin{equation}
+\boldsymbol{\mu}_j = \frac{\sum_{i=1}^{m} r_{ij} \mathbf{x}_i}{\sum_{i=1}^{m} r_{ij}}
+\end{equation}
+
+Note, that we 'cancelled' out the covariance definite matrix present on both sides. Also note how the
+optimal centroid $Mu_j$ for cluster j looks identical to the one from the l2-norm squared, as the average
+of the data points within the cluster. For the cluster assignment solving for $r_{ij}$, we'll follow the same
+logic we did for the l2-norm squared distance. Namely, we realize we are setting $r_{ij}$ to 1 where
+the distance between a point and cluster is the minimum for all given clusters. We will simply replace
+the distance function to the Mahalanobis distance squared formula provided in the assignment.
+
+\begin{equation}
+r_{ij} = \begin{cases}
+1 & \text{if } j = \arg \min_{j'} \; (\mathbf{x}_i - \boldsymbol{\mu}_{j'})^T \Sigma (\mathbf{x}_i - \boldsymbol{\mu}_{j'}) \\
+0 & \text{otherwise}
+\end{cases}
+\end{equation}
+
+
+\subsection*{Sources used to understand Mahalanobis distance:}
+\begin{enumerate}
+\item https://math.stackexchange.com/questions/428064/distance-of-a-test-point-from-the-center-of-an-ellipsoid
+\item https://www.statisticshowto.com/mahalanobis-distance/
+\item https://mccormickml.com/2014/07/22/mahalanobis-distance/
+\end{enumerate}
 \end{enumerate}
 
+\section{Image Compression Using Clustering}
 
 
-\section{Image compression using clustering [20 points]}
+The code for the Image Compression is in the Jupyter Notebook, as are the output images and original images.
+I originally wrote a k-means algorithm which would randomly re-assign centroid location for empty clusters and this
+performed well with respect to visual appearance of the rendered images. To bring my submission more in line
+with the requirements for the assignment, I implemented a change such that during a given iteration, any empty
+cluster was dropped. For low number k, this wasn't an issue, however, for k = 16 and k = 32, all three images
+exhibit significant drops, with final number of clusters anywhere from 11 to 25 respectively. I could visually
+tell that the image was not as crisp as the original nor the rendered images with re-assigned clusters. Additionally,
+the time it took to run my function in both cases was roughly the same about 2 minutes to 3 minutes for the
+football image depending on the set of random numbers I used. Later, I added a seed of 123 for reproducibility.
 
-In this programming assignment, you are going to apply clustering algorithms for image compression. This can also be viewed as an example of segmenting colors in an automated fashion using $K$-means clustering.
+Additionally, although I originally implemented a loop to calculate the distance and assign points to centroids,
+I then used numpy calculations before switching entirely to using the lin.alg.norm built-in function to help
+calculate the l2-norm squared or euclidean squared distance. I've commented out the originals to show their implementation.
 
-Your task is to implement \emph{$K$-means} for this purpose.  {\bf It is required you implement the algorithms yourself rather than calling k-means from a package. However, it is ok to use standard packages for supplementary tasks, e.g., file i/o, linear algebra, and visualization.} 
+For each k, I ran kmeans 5 runs and selected the best run by minimizing the within cluster sum of squares metric.
+Per Datanovia (source link below), the within cluster sum of squares is a method capturing within cluster variance
+and captures the "compactness" of clusters. The squared difference of the distance between
+data points and centroids are calculated and then summed for all clusters. A lower WCSS indicates that points
+tend to be closer to their centroids and are therefore better fit. In our runs, the iterations which on average
+had the lowest WCSS or the best fitting clusters were selected for each k. The kmeans package in R allows you
+to set the number of initial starts parameter nstart which is highly recommended. You can do 25, 50 or many more
+runs. In doing so, you may develop more stable results by selecting the variant with the lowest WCSS.
+
+The higher the number of centroids k, the longer the algorithm took to run. For the football image, the best
+run for k = 2 took 0.36 seconds, while the best run for k = 32 took 15.15 total seconds. This makes
+sense as increasing the number of k makes running the algorithm computationally expensive. Similarly, the number
+of iterations kmeans went through before converging also increased as the k did. For the football image,
+when k = 2, I only need 7 iterations for the best run, whereas when k = 32, I required 42 iterations for the best
+run. This makes sense as having more clusters would take longer to converge.
+
+I returned multiple data points in my kmeans function which I printed out as part of the run-k-means-and-visualize
+function. These included the length of the best iteration, k, number of centroids, best initialized centroids,
+and the number of iterations for each run as well as the best image itself. You can see the rendered images
+for each specified k as well as the three original images below.
+
+As for finding the best k for this specific image compression issue, this depends entirely on your goals. The lower
+the number of clusters k, the more compressed the image will be and the less time it will take to run the algorithm.
+However, in doing so, the visual representation will not be as crisp or clear as a higher k rendered image. It is
+important to determine what the situation calls for in determining how much to compress the image. In this instance,
+k = 32 provided the best rendered image though it may take up more space than the lower k images. Additionally,
+at 15 seconds a run, it didn't take too long. However, in other situations, determining the optimal number of clusters
+is wholly determined by the problem. One method used to determine optimal k is the elbow method. where one may
+plot the WCSS for different values of k and then find the "elbow" or sharp flattening of the curve which will
+correspond to an optimal k. Another method is to simply use domain knowledge or visually plot the data (when possible)
+to highlight existing clusters. There are other methods such as Silhouette analysis etc. For image compression,
+a visual cue along with examining visual acuity, size, and time to compute + render are the
+tradeoffs we would examine as the image will become more crisp as k increases.
 
 
-\subsubsection*{Formatting instruction}
+\subsection*{Football}
 
-As a starting point, we suggest the following input/output signature for your k-means algorithm.\\
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\linewidth]{football.jpg}
+    \caption{Original}
+\end{figure}
 
-\textbf{Input}
-\begin{itemize}
-  \item \texttt{pixels}: the input image representation. Each row contains one data point (pixel). For image dataset, it contains 3 columns, each column corresponding to Red, Green, and Blue components. Each component has an integer value between 0 and 255.
-  \item \texttt{k}: the number of desired clusters.
-\end{itemize}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\linewidth]{football_2.png}
+    \caption{K = 2}
+\end{figure}
 
-\textbf{Output}
-\begin{itemize}
-  \item \texttt{class}: cluster assignment of each data point in pixels. The assignment should be 1, 2, 3, etc. For $k = 5$, for example, each cell of the class should be either 1, 2, 3, 4, or 5. The output should be a column vector with \texttt{size(pixels, 1)} elements.
-  \item \texttt{centroid}: location of $k$ centroids (or representatives) in your result. With images, each centroid corresponds to the representative color of each cluster. The output should be a matrix with $K$ rows and 3 columns. The range of values should be [0, 255], possibly floating point numbers.
-\end{itemize}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\linewidth]{football_4.png}
+    \caption{K = 4}
+\end{figure}
 
-\subsubsection*{Hand-in}
-Both of your code and report will be evaluated. Upload the code as a zip file, and the report as a pdf, separately from the zip file. In your report, answer the following questions:
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\linewidth]{football_8.png}
+    \caption{K = 8}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\linewidth]{football_16.png}
+    \caption{K = 16}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\linewidth]{football_32.png}
+    \caption{K = 32}
+\end{figure}
+
+
+
+\subsection*{Cat}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\linewidth]{256px-Greycat.jpg}
+    \caption{Original}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\linewidth]{256px-Greycat_2.png}
+    \caption{K = 2}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\linewidth]{256px-Greycat_4.png}
+    \caption{K = 4}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\linewidth]{256px-Greycat_8.png}
+    \caption{K = 8}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\linewidth]{256px-Greycat_16.png}
+    \caption{K = 16}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\linewidth]{256px-Greycat_32.png}
+    \caption{K = 32}
+\end{figure}
+
+
+\subsection*{Coastal Abstract}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\linewidth]{coastal-abstract.jpeg}
+    \caption{Original}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\linewidth]{coastal-abstract_2.png}
+    \caption{K = 2}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\linewidth]{coastal-abstract_4.png}
+    \caption{K = 4}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\linewidth]{coastal-abstract_8.png}
+    \caption{K = 8}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\linewidth]{coastal-abstract_16.png}
+    \caption{K = 16}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\linewidth]{coastal-abstract_32.png}
+    \caption{K = 32}
+\end{figure}
+
+\subsection*{Sources}
 
 \begin{enumerate}
- 
-\item  (10 points) Use $k$-means with squared-$\ell_2$ norm as a metric for \texttt{coastal-abstract.jpeg} and \texttt{football.bmp} and also choose a third picture of your own to work on. We recommend the size of $320 \times 240$ or smaller. Run your $k$-means implementation with these pictures, with several different $k = 2, 4, 8, 16, 32$. 
-  
-{\it Comment:}  Your algorithm will segment the image into k regions in the RGB color space. For each pixel in the input image, the algorithm returns a label corresponding to a cluster.
-  
-Run your $k$-means implementation (with squared-$\ell_2$ norm) with random initialization centroids. Please try multiple times and report the best one for each $k$ (in terms of image quality).
-  
-\item (5 points) Please  report how long it takes to converge for each $k$ (report the number of iterations and elapsed time in seconds).
-
-\item (5 points) Describe a method to find the best $k$. What is your best $k$?
+\item https://www.datanovia.com/en/lessons/k-means-clustering-in-r-algorith-and-practical-examples/
+\item https://www.geeksforgeeks.org/find-a-matrix-or-vector-norm-using-numpy/
+\item https://www.w3schools.com/python/numpy/numpy\_creating\_arrays.asp
+\item https://numpy.org/doc/stable/reference/generated/numpy.zeros.html
+\item https://numpy.org/devdocs/reference/constants.html\#numpy.newaxis
+\item https://note.nkmk.me/en/python-opencv-bgr-rgb-cvtcolor/
+\item https://stackoverflow.com/questions/49434754/how-does-the-pyplot-imshow-function-work
+\item https://www.geeksforgeeks.org/ml-determine-the-optimal-value-of-k-in-k-means-clustering/
+\item Third image source: https://commons.wikimedia.org/wiki/File:Greycat.jpg
 
 \end{enumerate}
-  
 
-
-\subsubsection*{Note}
+\subsection*{Steps Taken for Algorithm}
+Steps Taken:
 \begin{itemize}
-  \item You may see errors caused by empty clusters when you use too large $k$. Your implementation should treat this exception as well. That is, do not terminate even if you have an empty cluster, but automatically decrement to a smaller number of clusters.
-
-  \item We recommend you test your code with several different pictures so that you can detect some problems that might happen occasionally. 
-
-  \item If we detect plagiarism from any other student's code or from the web, you will not be eligible for any credit for the entire homework, not just for this problem.
+\item convert images into pixel color representations
+\item define the number of clusters
+\item set the initial position of each cluster randomly (you are going to run this multiple times)
+\item use the l2-norm squared distance formula for each pixel to assign a cluster
+\item update the clusters
+\item repeat assignment until convergence
 \end{itemize}
 
-\section{MNIST Dataset clustering [25 points]}
+\section{MNIST Dataset Clustering}
 
-
-This question is to compare different classifiers and their performance for multi-class classifications on the complete MNIST dataset at \url{http://yann.lecun.com/exdb/mnist/}. You can find the data file \textbf{mnist\_10digits.mat} in the homework folder. The MNIST database of handwritten digits has a training set of 60,000 examples and a test set of 10,000 examples. Use the number of clusters $K = 10$.
-
-
-
-We suggest you ``standardize'' the features (pixels in this case) by dividing the values of the features by 255 (thus mapping the range of the features from [0, 255] to [0, 1]).
-
-We are going to use  {\it purity} score as a performance metric: each cluster is assigned to the class which is most frequent in the cluster, and then the accuracy of this assignment is measured by the number of correlated assigned samples and divided by the size of the cluster: 
-\[
+Steps I took:
+\begin{itemize}
+\item load in the MNIST file
+\item only maintain the train data set (per instructions)
+\item preprocess per instructions
+\item write (or import) the k-means with eucldiean squared distance
+\item write (or import) the k-means with manhattan squared distance
+\item calculate clusters for each image/data point
+\item assign class (from labeled y data) to each cluster based on which class is most common for a given cluster
+\item calculate purity score for both kmeans runs for each cluster as well as average purity score
+\end{itemize}
+\subsection{Results and Discussion}
+Please reference the added Jupyter notebook for code and direct output. I used the pyclustering library
+implementation of kmeans so that I could easily use both Manhattan and squared l2norm distance metrics.
+Additionally, I implemented the kmeans++ methodology of setting initial centroids to avoid needing to run each
+algorithm multiple times and choose the run with the lowest WCSS as I did for section 3. Following the steps
+I took outlined in the above (standardizing, dropping test sets, assigning clusters, finding the majority
+labels, anc calculating purity score as shown below), I was able to obtain average purity score of roughly 58.28
+percent when using squared euclidean as the distance metric and 51.69 when using Manhattan distance as the distance
+metric. This suggests that the squared euclidean distance metric captures the MNIST data structure more effectively
+as it is more sensitive to large differences in distances between data points than manhattan distance.
+\begin{equation}
 \mbox{purity}_i = \frac{\mbox{corrected assigned samples}_i}{\mbox{size of cluster}_i}
-\]
-for the cluster $i$. 
+\end{equation}
+Below are the individual purity scores and assigned label for each cluster for the Euclidean Squared distance
+run of the K-Means algorithm
 
+\begin{table}[h!]
+\centering
+\begin{tabular}{|c|c|c|}
+\hline
+\textbf{Cluster} & \textbf{Assigned Label} & \textbf{Purity Score} \\
+\hline
+0 & 1 & 0.5902 \\
+1 & 0 & 0.9385 \\
+2 & 3 & 0.5310 \\
+3 & 5 & 0.3058 \\
+4 & 6 & 0.8723 \\
+5 & 1 & 0.6471 \\
+6 & 4 & 0.3585 \\
+7 & 8 & 0.6194 \\
+8 & 2 & 0.9177 \\
+9 & 7 & 0.4367 \\
+\hline
+\end{tabular}
+\caption{Squared L2-Norm: Cluster Assignments and Purity Scores}
+\end{table}
+
+
+Below are the individual purity scores and assigned label for each cluster for the Manhattan distance
+run of the K-Means algorithm.
+
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{|c|c|c|}
+\hline
+\textbf{Cluster} & \textbf{Assigned Label} & \textbf{Purity Score} \\
+\hline
+0 & 8 & 0.5693 \\
+1 & 8 & 0.4366 \\
+2 & 1 & 0.3586 \\
+3 & 7 & 0.3841 \\
+4 & 6 & 0.8728 \\
+5 & 0 & 0.9410 \\
+6 & 3 & 0.5966 \\
+7 & 2 & 0.9603 \\
+8 & 4 & 0.3948 \\
+9 & 0 & 0.8901 \\
+\hline
+\end{tabular}
+\caption{Manhattan: Cluster Assignments and Purity Scores}
+\end{table}
+
+\subsection*{Sources}
 \begin{enumerate}
-
-\item (15 points) Use the squared-$\ell_2$ norm as a metric for clustering (you may base it on the code you had for Question 2 and make necessary changes.) 
-%
-Report the {\it purity} score for each cluster. 
-
-\item (10 points) Now try your $k$-means with the Manhattan distance (or $\ell_1$ distance) and repeat the same steps in Part (1). Please note that the assignment of data points should be based on the Manhattan distance, and the cluster centroid (by minimizing the sum of deviance -- as a result of using the Manhattan distance) will be taken as the ``median'' of each cluster. Report the {\it purity} score for each cluster. Comment on which metric gives the better result?
-
+\item https://www.kaggle.com/code/arushchillar/kmeans-clustering-using-different-distance-metrics
+\item https://yann.lecun.com/exdb/mnist/
+\item https://stackoverflow.com/questions/76246578/module-numpy-has-no-attribute-warnings
+\item https://pyclustering.github.io/docs/0.8.2/html/da/d22/classpyclustering\_1\_1cluster\_1\_1kmeans\_1\_1kmeans.html
+\item https://numpy.org/doc/stable/reference/generated/numpy.bincount.html
 \end{enumerate}
-
-
-
-
-
-
-
-\section{Political blogs dataset [bonus, 10 points]}
-
-We will study a political blog dataset first compiled for the paper Lada A. Adamic and Natalie Glance, ``The political blogosphere and the 2004 US Election'', in Proceedings of the WWW-2005 Workshop on the Weblogging Ecosystem (2005). It is assumed that blog-site with the same political orientation are more likely to link to each other, thus, forming a ``community'' or ``cluster'' in a graph. In this question, we will see whether or not this hypothesis is likely to be true based on the data.
-\begin{itemize}
-
-\item The dataset \textsf{nodes.txt} contains a graph with $n = 1490$ vertices (``nodes'') corresponding to political blogs. 
-
-\item The dataset \textsf{edges.txt} contains edges between the vertices. You may remove isolated nodes (nodes that are not connected to any other nodes) in the pre-processing. 
-
-\end{itemize}
-
-We will treat the network as an undirected graph; thus, when constructing the adjacency matrix, make it symmetrical by, e.g., set the entry in the adjacency matrix to be one whether there is an edge between the two nodes (in either direction). 
-
-In addition, each vertex has a 0-1 label (in the 3rd column of the data file) corresponding to the true political orientation of that blog. We will consider this as the true label and check whether spectral clustering will cluster nodes with the same political orientation as possible. 
-
-\begin{enumerate}
-
-\item (5 points) Use spectral clustering to find the $k = 2, 5, 10, 30, 50$ clusters in the network of political blogs (each node is a blog, and their edges are defined in the file \textsf{edges.txt}). Find majority labels in each cluster for different $k$ values, respectively. For example, if there are $k = 2$ clusters, and their labels are $\{0, 1, 1, 1\}$ and $\{0, 0, 1\}$ then the majority label for the first cluster is 1 and for the second cluster is 0. {\bf It is required you implement the algorithms yourself rather than calling from a package.} 
-
-Now compare the majority label with the individual labels in each cluster, and report the {\it mismatch rate} for each cluster, when $k = 2, 5, 10, 30, 50$. For instance, in the example above, the mismatch rate for the first cluster is 1/4 (only the first node differs from the majority), and the second cluster is 1/3. 
-
-\item (5  points) Tune your $k$ and find the number of clusters to achieve a reasonably small {\it mismatch rate}. Please explain how you tune $k$ and what is the achieved mismatch rate. Please explain intuitively what this result tells about the network community structure.
-
-\end{enumerate}
-
-
-
-
 \end{document}
