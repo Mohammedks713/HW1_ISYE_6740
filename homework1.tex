@@ -244,7 +244,7 @@ J =\sum_{i=1}^m\sum_{j=1}^k r^{ij} (\text x^i-\mu^j)^T \Sigma  (\text x^i-\mu^j)
 \end{equation}
 
 Per the source I've linked below, the Mahalnobis distance is the relative distance of point $x_i$, from the center
-of mass y (in our case, the centroid Mu_j). The transpose vector of $x_i$ - $Mu_j$ is multiplied by the
+of mass y (in our case, the centroid $Mu_j$). The transpose vector of $x_i$ - $Mu_j$ is multiplied by the
 inverse of the covariance matrix multiplied by $x_i$ - $Mu_j$. This essentially introduces a normalization
 component. Additionally, like our squared euclidean distance in the prior problem, we have the squared
 Mahalanobis distance. The steps we take will be identical to those we took to solve for the
@@ -252,7 +252,7 @@ respective $Mu_j$ and $r_{ij}$ of the euclidean squared distance. However, now w
 covariance term to be concerned with. I'll skip ahead to the parts that will look different.
 \begin{equation}
 \frac{\partial J}{\partial \boldsymbol{\mu}_j} = -2 \sum_{i=1}^{m} r_{ij} \Sigma (\mathbf{x}_i - \boldsymbol{\mu}_j)
-\]
+\end{equation}
 
 \begin{equation}
 -2 \sum_{i=1}^{m} r_{ij} \Sigma (\mathbf{x}_i - \boldsymbol{\mu}_j) = 0
