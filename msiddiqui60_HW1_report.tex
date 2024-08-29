@@ -292,10 +292,289 @@ Another source: https://mccormickml.com/2014/07/22/mahalanobis-distance/
 
 Third image source: https://commons.wikimedia.org/wiki/File:Greycat.jpg
 
-Steps:
+The code for the Image Compression is in the Jupyter Notebook, as are the output images and original images.
+I originally wrote a k-means algorithm which would randomly re-assign centroid location for empty clusters and this
+performed well with respect to visual appearance of the rendered images. To bring my submission more in line
+with the requirements for the assignment, I implemented a change such that during a given iteration, any empty
+cluster was dropped. For low number k, this was't an issue, however, for k = 16 and k = 32, all three images
+exhibit significant drops, with final number of clusters anywhere from 11 to 25 respectively. I could visually
+tell that the image was not as crisp as the original nor the rendered images with re-assigned clusters. Additionally,
+the time it took to run my function in both cases was roughly the same about 2 minutes to 3 minutes for the
+football image depending on the set of random numbers I used. Later, I added a seed of 123 for reproducibility.
+
+Additionally, although I originally implemented a loop to calculate the distance and assign points to centroids,
+I then used numpy calculations before switching entirely to using the lin.alg.norm built-in function to help
+calculate the l2_norm squared or euclidian squared distance. I've commented out the originals to show the implementation.
+
+For each k, I ran 5 runs and selected the best run by minimizing the within cluster sum of squares metric.
+Per Datanovia (source link below), the within cluster sum of squares is a method capturing within cluster variance
+and captures the "compactness" of clusters. To calculate, the squared difference of the distance between
+data points and centroids are calculated and then summed for all clusters. A lower WCSS indicates that points
+tend to be closer to their centroids and are therefore better fit. In our runs, the iterations which on average
+had the lowest WCSS or the best fitting clusters were selected for each k. The kmeans package in R allows you
+to set the number of initial starts parameter nstart which is highly recommended. You can do 25, 50 or many more
+runs. In doing so, you may develop more stable results by selecting the variant with the lowest WCSS.
+
+The higher the number of centroids k, the longer the algorithm took to run. For the football image, the best
+run for k = 2 took 0.36 seconds, while the best run for k = 32 took 15.15 total seconds. This makes
+sense as increasing the number of k makes running the algorithm computationally expensive. Similarly, the number
+of iterations kmeans went through before converging also increased as the k did. For the football image,
+when k = 2, I only need 7 iterations for the best run, whereas when k = 32, I required 42 iterations for the best
+run. This makes sense as having more clusters would take longer to converge.
+
+I returned multiple data points in my kmeans function which I printed out as part of the run_k_means_and_visualize
+function. These included the length of the best iteration, k, number of centroids, best initialized centroids,
+and the number of iterations for each run as well as the best image itself. You can see the rendered images
+for each specified k as well as the three original images below.
+
+As for finding the best k for this specific image compression issue, this depends entirely on your goals. The lower
+the number of clusters k, the more compressed the image will be and the less time it will take to run the algorithm.
+However, in doing so, the visual representation will not be as crisp or clear as a higher k rendered image. It is
+important to determine what the situation calls for in determining how much to compress the image. In this instance,
+k = 32 provided the best rendered image though it may take up more space than the lower k images. Additionally,
+at 15 seconds a run, it didn't take too long. However, in other situations, determining the optimal number of clusters
+is wholly determined by the problem. One method used to determine optimal k is the elbow method. where one may
+plot the WCSS for different values of k and then find the "elbow" or sharp flattening of the curve which will
+correspond to an optimal k. Another method is to simply use domain knowledge or visually plot the data (when possible)
+to highlight existing clusters. There are other methods such as Silhouette analysis etc. For image compression,
+a visual cue along with examing tradeoff between visual acuity, size, and time to compute + render are the
+tradeoffs we would examine as the image will become more crisp as k increases.
+
+\subsection{Football}
+\begin{figure}
+    \centering
+    \includegraphics{c/users/moham/pycharmprojects/hw1_isye_6740/data/football}
+    \caption{Original}
+    \label{fig:football}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \includegraphics{C:\Users\moham\PycharmProjects\HW1_ISYE_6740\outputs\football_2}
+    \caption{K = 2}
+    \label{fig:football_2}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \includegraphics{C:\Users\moham\PycharmProjects\HW1_ISYE_6740\outputs\football_4}
+    \caption{K = 4}
+    \label{fig:football_4}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \includegraphics{C:\Users\moham\PycharmProjects\HW1_ISYE_6740\outputs\football_8}
+    \caption{K = 8}
+    \label{fig:football_8}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \includegraphics{C:\Users\moham\PycharmProjects\HW1_ISYE_6740\outputs\football_16}
+    \caption{K = 16}
+    \label{fig:football_16}
+\end{figure}
+
+
+\begin{figure}
+    \centering
+    \includegraphics{C:\Users\moham\PycharmProjects\HW1_ISYE_6740\outputs\football_32}
+    \caption{K = 32}
+    \label{fig:football_32}
+\end{figure}
+
+\subsection{Cat}
+\begin{figure}
+    \centering
+    \includegraphics{C:\Users\moham\PycharmProjects\HW1_ISYE_6740\data\256px-Greycat}
+    \caption{Original}
+    \label{fig:256px-greycat}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \includegraphics{C:\Users\moham\PycharmProjects\HW1_ISYE_6740\outputs\256px-Greycat_2}
+    \caption{K = 2}
+    \label{fig:256px-greycat_2}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \includegraphics{C:\Users\moham\PycharmProjects\HW1_ISYE_6740\outputs\256px-Greycat_4}
+    \caption{K = 4}
+    \label{fig:256px-greycat_4}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \includegraphics{C:\Users\moham\PycharmProjects\HW1_ISYE_6740\outputs\256px-Greycat_8}
+    \caption{K = 8}
+    \label{fig:256px-greycat_8}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \includegraphics{C:\Users\moham\PycharmProjects\HW1_ISYE_6740\outputs\256px-Greycat_16}
+    \caption{K = 16}
+    \label{fig:256px-greycat_16}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \includegraphics{C:\Users\moham\PycharmProjects\HW1_ISYE_6740\outputs\256px-Greycat_32}
+    \caption{K = 32}
+    \label{fig:256px-greycat_32}
+\end{figure}
+
+
+\subsection{Coastal Abstract}
+
+\begin{figure}
+    \centering
+    \includegraphics{C:\Users\moham\PycharmProjects\HW1_ISYE_6740\data\coastal-abstract}
+    \caption{Original}
+    \label{fig:coastal-abstract}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \includegraphics{C:\Users\moham\PycharmProjects\HW1_ISYE_6740\outputs\coastal-abstract_2}
+    \caption{K = 2}
+    \label{fig:coastal-abstract_2}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \includegraphics{C:\Users\moham\PycharmProjects\HW1_ISYE_6740\outputs\coastal-abstract_4}
+    \caption{K = 4}
+    \label{fig:coastal-abstract_4}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \includegraphics{C:\Users\moham\PycharmProjects\HW1_ISYE_6740\outputs\coastal-abstract_8}
+    \caption{K = 8}
+    \label{fig:coastal-abstract_8}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \includegraphics{C:\Users\moham\PycharmProjects\HW1_ISYE_6740\outputs\coastal-abstract_16}
+    \caption{K = 16}
+    \label{fig:coastal-abstract_16}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \includegraphics{C:\Users\moham\PycharmProjects\HW1_ISYE_6740\outputs\coastal-abstract_32}
+    \caption{K = 32}
+    \label{fig:coastal-abstract_32}
+\end{figure}
+
+\subsection{Sources}
+
+\begin{enumerate}
+\item https://www.datanovia.com/en/lessons/k-means-clustering-in-r-algorith-and-practical-examples/
+\item https://www.geeksforgeeks.org/find-a-matrix-or-vector-norm-using-numpy/#
+\item https://www.w3schools.com/python/numpy/numpy_creating_arrays.asp
+\item https://numpy.org/doc/stable/reference/generated/numpy.zeros.html
+\item https://numpy.org/devdocs/reference/constants.html#numpy.newaxis
+\item https://note.nkmk.me/en/python-opencv-bgr-rgb-cvtcolor/
+\item https://stackoverflow.com/questions/49434754/how-does-the-pyplot-imshow-function-work
+\item https://www.geeksforgeeks.org/ml-determine-the-optimal-value-of-k-in-k-means-clustering/
+
+\end{enumerate}
+
+\subsection{Steps Taken for Algorithm}
+Steps Taken:
 - convert images into pixel color representations
 - define the number of clusters
 - set the initial position of each cluster randomly (you are going to run this multiple times)
 - use the l2-norm squared distance formula for each pixel to assign a cluster
 - update the clusters
-- repeat assignment until convergence (maybe set a condition until it stops)
+- repeat assignment until convergence
+
+\section{MNIST Dataset Clustering}
+
+Steps I took:
+- load in the MNIST file
+- only maintain the train data set (per instructions)
+- preprocess per instructions
+- write (or import) the k-means with eucldiean squared distance
+- write (or import) the k-means with manhattan squared distance
+- calculate clusters for each image/data point
+- assign class (from labeled y data) to each cluster based on which class is most common for a given cluster
+- calculate purity score for both kmeans runs for each cluster as well as average purity score
+
+\subsection{Results and Discussion}
+Please reference the added Jupyter notebook for code and direct output. I used the pyclustering library
+implementation of kmeans so that I could easily use both Manhattan and squared l2norm distance metrics.
+Additionally, I implemented the kmeans++ methodolgy of setting initial centroids to avoid needing to run each
+algorithm multiple times and choose the run with the lowest WCSS as I did for section 3. Following the steps
+I took outlined in the above (standardizing, dropping test sets, assigning clusters, finding the majority
+labels, anc calculating purity score as shown below), I was able to obtain average purity score of roughly 58.28
+percent when using squared euclidean as the distance metric and 51.69 when using Manhattan distance as the distance
+metric. This suggests that the squared euclidean distance metric captures the MNIST data structure more effectively
+as it is more sensitive to large differences in distances between data points than manhattan distance.
+\[
+\mbox{purity}_i = \frac{\mbox{corrected assigned samples}_i}{\mbox{size of cluster}_i}
+\]
+Below are the individual purity scores and assigned label for each cluster for the Euclidean Squared distance
+run of the K-Means algorithm
+
+
+\begin{tabular}{|c|c|c|}
+\hline
+\textbf{Cluster} & \textbf{Assigned Label} & \textbf{Purity Score} \\
+\hline
+0 & 1 & 0.5902 \\
+\hline
+1 & 0 & 0.9385 \\
+\hline
+2 & 3 & 0.5310 \\
+\hline
+3 & 5 & 0.3058 \\
+\hline
+4 & 6 & 0.8723 \\
+\hline
+5 & 1 & 0.6471 \\
+\hline
+6 & 4 & 0.3585 \\
+\hline
+7 & 8 & 0.6194 \\
+\hline
+8 & 2 & 0.9177 \\
+\hline
+9 & 7 & 0.4367 \\
+\hline
+\end{tabular}
+
+Below are the individual purity scores and assigned label for each cluster for the Manhattan distance
+run of the K-Means algorithm.
+
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{|c|c|c|}
+\hline
+\textbf{Cluster} & \textbf{Assigned Label} & \textbf{Purity Score} \\
+\hline
+0 & 8 & 0.5693 \\
+1 & 8 & 0.4366 \\
+2 & 1 & 0.3586 \\
+3 & 7 & 0.3841 \\
+4 & 6 & 0.8728 \\
+5 & 0 & 0.9410 \\
+6 & 3 & 0.5966 \\
+7 & 2 & 0.9603 \\
+8 & 4 & 0.3948 \\
+9 & 0 & 0.8901 \\
+\hline
+\end{tabular}
+\caption{Cluster Assignments and Purity Scores}
+\label{tab:cluster_purity}
+\end{table}
+
+
+\end{document}
